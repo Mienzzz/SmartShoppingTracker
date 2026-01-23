@@ -1,0 +1,7 @@
+{
+  "name": "Smart Shopping Tracker",
+  "description": "Scan and track supermarket receipts to compare historical prices and manage your monthly budget.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
