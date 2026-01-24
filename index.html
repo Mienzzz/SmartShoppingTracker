@@ -9,8 +9,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CekBon">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="manifest" href="/manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#2563eb" />
 
   <!-- Tailwind CSS -->
@@ -37,7 +39,6 @@
       scrollbar-width: none;
     }
     
-    /* Sembunyikan panah input number */
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
       -webkit-appearance: none;
@@ -84,11 +85,18 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
-          console.log('SW Registered with scope:', reg.scope);
-        }).catch(err => {
-          console.log('SW Registration failed:', err);
-        });
+        // Menggunakan path absolut dari origin untuk menghindari 'same-origin' scope error
+        const swPath = window.location.pathname.endsWith('/') 
+          ? window.location.pathname + 'sw.js' 
+          : window.location.pathname.split('/').slice(0, -1).join('/') + '/sw.js';
+        
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => {
+            console.log('PWA: Service Worker Aktif');
+          })
+          .catch(err => {
+            console.warn('PWA: Registrasi dilewati (mode dev atau error origin)');
+          });
       });
     }
   </script>

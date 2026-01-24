@@ -1,27 +1,27 @@
 {
-  "id": "com.cekbon.app",
+  "id": "com.cekbon.privatecloud.v1",
   "short_name": "CekBon",
-  "name": "CekBon - Smart Shopping Tracker",
-  "description": "Simpan dan lacak struk belanja di cloud privat.",
+  "name": "CekBon Private Cloud",
+  "description": "Smart Receipt Tracker & Price History Analyzer",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     }
   ],
-  "start_url": "/?source=pwa",
-  "scope": "/",
+  "start_url": "/",
   "display": "standalone",
+  "scope": "/",
   "orientation": "portrait",
   "theme_color": "#2563eb",
   "background_color": "#f8fafc",
-  "categories": ["shopping", "finance"]
+  "prefer_related_applications": false
 }
