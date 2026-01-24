@@ -30,14 +30,24 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    
+    /* Loading state sebelum React dimuat */
+    .initial-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #64748b;
+    }
   </style>
 <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "@neondatabase/serverless": "https://esm.sh/@neondatabase/serverless@^1.0.2",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
+    "@neondatabase/serverless": "https://esm.sh/@neondatabase/serverless@^1.0.2",
     "uuid": "https://esm.sh/uuid@^13.0.0",
     "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
     "vite": "https://esm.sh/vite@^7.3.1",
@@ -47,8 +57,18 @@
 </script>
 </head>
 <body>
-  <div id="root"></div>
-  <!-- Entry point untuk Vite -->
+  <div id="root">
+    <div class="initial-loader">
+      <div style="width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <p style="margin-top: 16px; font-weight: 600; font-size: 14px;">Memuat Aplikasi...</p>
+    </div>
+  </div>
+  
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- Vite secara otomatis akan memproses file ini dan melakukan bundling -->
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
