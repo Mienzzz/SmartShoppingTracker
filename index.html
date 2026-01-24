@@ -99,17 +99,17 @@
   <script type="module" src="index.tsx"></script>
 
   <script>
-    if ('serviceWorker' in navigator) {
+    // Hanya daftarkan Service Worker jika didukung dan protokol aman (https atau localhost)
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       window.addEventListener('load', () => {
-        // Menggunakan path relatif sederhana 'sw.js'. 
-        // Browser akan otomatis menangani origin dan scope berdasarkan lokasi file ini.
-        navigator.serviceWorker.register('sw.js')
+        // Menggunakan path relatif eksplisit './sw.js' untuk menjamin scope same-origin
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
           .then(reg => {
             console.log('Service Worker terdaftar:', reg.scope);
-            reg.update();
           })
           .catch(err => {
-            console.error('Pendaftaran Service Worker gagal:', err);
+            // Kita log tapi tidak menghentikan aplikasi jika ini gagal di lingkungan preview
+            console.warn('Service Worker gagal (mungkin karena pembatasan sandbox):', err.message);
           });
       });
     }

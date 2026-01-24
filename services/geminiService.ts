@@ -26,9 +26,10 @@ export const analyzeReceipts = async (base64Images: string[]) => {
           {
             text: `Ekstrak data dari struk belanja ini ke JSON murni. 
             Pastikan: 
-            1. total_amount adalah angka akhir yang dibayar.
-            2. item.discount adalah nominal potongan per item (0 jika tidak ada).
-            3. item.total adalah (qty * unit_price) - discount.`
+            1. total_amount adalah angka akhir yang dibayar oleh pelanggan.
+            2. item.discount adalah nominal diskon khusus per baris barang (0 jika tidak ada).
+            3. item.total adalah (qty * unit_price) - discount.
+            4. total_discount adalah total diskon global (seperti diskon member, voucher, atau potongan belanja langsung di akhir struk).`
           }
         ]
       },

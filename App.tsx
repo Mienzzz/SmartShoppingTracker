@@ -312,7 +312,7 @@ const App: React.FC = () => {
 
                 <div className="bg-blue-50/50 p-4 rounded-[2rem] border border-blue-100/50">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-blue-400 uppercase">Potongan Extra (Global)</span>
+                    <span className="text-[10px] font-black text-blue-400 uppercase">Diskon</span>
                     <div className="flex items-center gap-1 font-black text-blue-600 italic">
                       <span>Rp</span>
                       <input 
@@ -372,7 +372,7 @@ const App: React.FC = () => {
                       ))}
                       {(receipt.total_discount || 0) > 0 && (
                         <div className="flex justify-between p-3 bg-blue-50/30 rounded-2xl border border-blue-100/50">
-                          <span className="text-[10px] font-black text-blue-400 uppercase">Potongan Global</span>
+                          <span className="text-[10px] font-black text-blue-400 uppercase">Diskon</span>
                           <span className="text-[10px] font-black text-blue-600 italic">- Rp {receipt.total_discount.toLocaleString()}</span>
                         </div>
                       )}
@@ -393,7 +393,7 @@ const App: React.FC = () => {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeWidth="2.5"/></svg>
           </button>
           <button onClick={triggerCamera} className="bg-slate-900 text-white p-6 rounded-full shadow-2xl ring-8 ring-blue-600/10 active:scale-95 transition-all">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" strokeWidth="3"/></svg>
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" strokeWidth="3"/></svg>
           </button>
           <div className="w-16"></div>
         </div>
