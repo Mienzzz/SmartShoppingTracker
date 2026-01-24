@@ -1,5 +1,6 @@
 const CACHE_NAME = 'billcapture-v1';
 const ASSETS_TO_CACHE = [
+  './',
   'index.html',
   'manifest.json'
 ];
@@ -7,8 +8,8 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Use relative paths to ensure same-origin fetching during install
-      return cache.addAll(ASSETS_TO_CACHE);
+      // Menambahkan cache dengan fail-safe
+      return cache.addAll(ASSETS_TO_CACHE).catch(err => console.warn('PWA Cache Warning:', err));
     })
   );
   self.skipWaiting();
@@ -34,7 +35,7 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(event.request.url);
   
-  // Skip cross-origin requests to prevent same-origin or CORS errors within the worker
+  // Lewati permintaan cross-origin agar tidak error
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(

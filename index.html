@@ -99,17 +99,15 @@
   <script type="module" src="index.tsx"></script>
 
   <script>
-    // Hanya daftarkan Service Worker jika didukung dan protokol aman (https atau localhost)
-    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
       window.addEventListener('load', () => {
-        // Menggunakan path relatif eksplisit './sw.js' untuk menjamin scope same-origin
+        // Mendaftarkan ./sw.js dengan scope ./ agar sinkron dengan start_url di manifest
         navigator.serviceWorker.register('./sw.js', { scope: './' })
           .then(reg => {
-            console.log('Service Worker terdaftar:', reg.scope);
+            console.log('PWA Service Worker Aktif:', reg.scope);
           })
           .catch(err => {
-            // Kita log tapi tidak menghentikan aplikasi jika ini gagal di lingkungan preview
-            console.warn('Service Worker gagal (mungkin karena pembatasan sandbox):', err.message);
+            console.warn('PWA Registration Skip:', err.message);
           });
       });
     }
