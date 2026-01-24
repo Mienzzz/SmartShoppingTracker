@@ -84,34 +84,26 @@
   <script type="module" src="/index.tsx"></script>
   <script>
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+
+      // Cek apakah aplikasi sudah dikontrol oleh SW sebelumnya
+      const isControlling = !!navigator.serviceWorker.controller;
+
       window.addEventListener('load', () => {
-        // Mendaftarkan SW tanpa query string dinamis untuk mencegah loop
         navigator.serviceWorker.register('./sw.js').then(reg => {
           console.log('SW terdaftar');
           
-          // Cek update manual saat aplikasi dibuka
-          reg.update();
-
-          reg.onupdatefound = () => {
-            const installingWorker = reg.installing;
-            installingWorker.onstatechange = () => {
-              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Beritahu user atau reload otomatis hanya JIKA ada update nyata
-                console.log('Versi baru ditemukan, memuat ulang...');
-                window.location.reload();
-              }
-            };
-          };
+          // Hanya dengarkan perubahan controller JIKA kita sudah punya controller awal
+          // Ini mencegah loop saat instalasi pertama kali
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            if (isControlling) {
+              refreshing = true;
+              console.log('Versi baru aktif, memuat ulang halaman...');
+              window.location.reload();
+            }
+          });
         });
-      });
-
-      // Menangani pergantian controller (ketika SW baru aktif)
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          window.location.reload();
-          refreshing = true;
-        }
       });
     }
   </script>
