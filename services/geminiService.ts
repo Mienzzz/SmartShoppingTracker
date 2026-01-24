@@ -1,9 +1,9 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const analyzeReceipts = async (base64Images: string[]) => {
+  // Inisialisasi di dalam fungsi sesuai rekomendasi terbaru
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
   const imageParts = base64Images.map(base64 => ({
     inlineData: {
       mimeType: 'image/jpeg',
