@@ -81,29 +81,20 @@
     </div>
   </div>
   
+  <!-- Vite akan menangani resolusi index.tsx secara otomatis -->
   <script type="module" src="/index.tsx"></script>
+
   <script>
+    // Registrasi Service Worker yang lebih stabil tanpa auto-reload loop
     if ('serviceWorker' in navigator) {
-      let refreshing = false;
-
-      // Cek apakah aplikasi sudah dikontrol oleh SW sebelumnya
-      const isControlling = !!navigator.serviceWorker.controller;
-
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then(reg => {
-          console.log('SW terdaftar');
-          
-          // Hanya dengarkan perubahan controller JIKA kita sudah punya controller awal
-          // Ini mencegah loop saat instalasi pertama kali
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return;
-            if (isControlling) {
-              refreshing = true;
-              console.log('Versi baru aktif, memuat ulang halaman...');
-              window.location.reload();
-            }
-          });
-        });
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+            console.log('CekBon SW: Aktif');
+            // Cek pembaruan di background tanpa mengganggu user
+            reg.update();
+          })
+          .catch(err => console.error('CekBon SW Error:', err));
       });
     }
   </script>
