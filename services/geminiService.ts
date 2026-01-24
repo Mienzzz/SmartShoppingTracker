@@ -1,7 +1,9 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 
 export const analyzeReceipts = async (base64Images: string[]) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Use process.env.API_KEY directly in the constructor as per guidelines
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   
   const imageParts = base64Images.map(base64 => ({
     inlineData: {
@@ -17,16 +19,11 @@ export const analyzeReceipts = async (base64Images: string[]) => {
         parts: [
           ...imageParts,
           {
-            text: `Anda adalah asisten ekstraksi struk belanja. Ekstrak data dari gambar struk ini ke dalam format JSON murni.
-            
-            PENTING UNTUK DISKON:
-            - Cari baris bertanda 'Disc', 'Promo', 'Potongan', atau angka negatif.
-            - Jika ditemukan diskon per item, masukkan ke properti 'discount'.
-            - 'unit_price' adalah harga asli sebelum diskon.
-            - 'total' HARUS (qty * unit_price) - discount.
-            - 'total_amount' adalah jumlah akhir yang dibayarkan.
-
-            Format respons harus JSON murni tanpa markdown blocks.`
+            text: `Ekstrak data dari struk belanja ini ke JSON murni. 
+            Pastikan: 
+            1. total_amount adalah angka akhir yang dibayar.
+            2. item.discount adalah nominal potongan per item (0 jika tidak ada).
+            3. item.total adalah (qty * unit_price) - discount.`
           }
         ]
       },
@@ -38,7 +35,7 @@ export const analyzeReceipts = async (base64Images: string[]) => {
             store_name: { type: Type.STRING },
             date: { type: Type.STRING },
             total_amount: { type: Type.NUMBER },
-            total_discount: { type: Type.NUMBER, description: "Global discount if any" },
+            total_discount: { type: Type.NUMBER },
             items: {
               type: Type.ARRAY,
               items: {
@@ -59,16 +56,14 @@ export const analyzeReceipts = async (base64Images: string[]) => {
       }
     });
 
-    let text = response.text;
+    const text = response.text;
+    if (!text) throw new Error("EMPTY_RESPONSE");
     
-    // Pembersihan ekstra: Hapus markdown code blocks jika model tidak mematuhi responseMimeType
-    if (text.includes('```')) {
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    }
-
-    return JSON.parse(text);
+    // Hilangkan blok markdown jika ada
+    const cleanJson = text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    return JSON.parse(cleanJson);
   } catch (error) {
-    console.error("Gemini Analysis Error Detail:", error);
+    console.error("Gemini Scan Error:", error);
     throw error;
   }
 };
