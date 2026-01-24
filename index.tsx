@@ -4,9 +4,7 @@ import App from './App';
 
 const rootElement = document.getElementById('root');
 
-if (!rootElement) {
-  console.error("Elemen root tidak ditemukan!");
-} else {
+if (rootElement) {
   try {
     const root = createRoot(rootElement);
     root.render(
@@ -15,23 +13,13 @@ if (!rootElement) {
       </React.StrictMode>
     );
   } catch (error) {
-    console.error("Render Error:", error);
+    console.error("Critical Render Error:", error);
     rootElement.innerHTML = `
-      <div style="padding: 40px; font-family: sans-serif; text-align: center; color: #333;">
-        <h2 style="color: #ef4444;">Aplikasi Gagal Dimuat</h2>
-        <p>Terjadi kesalahan teknis saat menjalankan kode.</p>
-        <div style="text-align: left; background: #f1f5f9; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 12px; overflow: auto;">
-          <code>${error instanceof Error ? error.message : String(error)}</code>
-        </div>
-        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">
-          Coba Lagi
-        </button>
+      <div style="padding: 20px; font-family: sans-serif; text-align: center;">
+        <h1 style="color: red;">Maaf, terjadi kesalahan saat memuat aplikasi.</h1>
+        <p>${error instanceof Error ? error.message : 'Unknown Error'}</p>
+        <button onclick="location.reload()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 8px;">Coba Muat Ulang</button>
       </div>
     `;
   }
 }
-
-// Menangkap error yang tidak tertangani di luar lifecycle React
-window.onerror = function(message, source, lineno, colno, error) {
-  console.error("Global Error:", message, error);
-};

@@ -31,7 +31,6 @@
       scrollbar-width: none;
     }
     
-    /* Loading state sebelum React dimuat */
     .initial-loader {
       display: flex;
       flex-direction: column;
@@ -40,6 +39,7 @@
       height: 100vh;
       color: #64748b;
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 <script type="importmap">
 {
@@ -64,11 +64,7 @@
     </div>
   </div>
   
-  <style>
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
-
-  <!-- Vite secara otomatis akan memproses file ini dan melakukan bundling -->
+  <!-- Vite Entry Point -->
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
