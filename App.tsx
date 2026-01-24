@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+// Add missing React import to fix namespace errors for React.FC and React.ChangeEvent
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Receipt, ReceiptItem } from './types';
 import { getDeviceId, getReceiptsFromNeon, saveReceiptToNeon, findHistoricalPrices, ensureSchema } from './lib/storage';
 import { analyzeReceipts } from './services/geminiService';

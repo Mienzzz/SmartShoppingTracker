@@ -1,21 +1,21 @@
-const CACHE_NAME = 'cekbon-cache-v12';
-const ASSETS = [
+const CACHE_NAME = 'cekbon-cache-v13';
+const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Paksa SW baru aktif segera
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
-      self.clients.claim(), // Ambil kendali halaman segera
+      self.clients.claim(),
       caches.keys().then((keys) => Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) return caches.delete(key);
@@ -26,10 +26,16 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Selalu coba jaringan dulu untuk file utama agar tidak terjebak versi lama
+  // STRATEGI KRUSIAL: Untuk navigasi halaman utama, selalu ambil dari Jaringan (Network First)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
+        .then(response => {
+          // Update cache dengan versi terbaru dari jaringan
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          return response;
+        })
         .catch(() => caches.match('./index.html'))
     );
     return;
