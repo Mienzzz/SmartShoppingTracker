@@ -4,12 +4,14 @@ import { getDeviceId, getReceiptsFromNeon, saveReceiptToNeon, findHistoricalPric
 import { analyzeReceipts } from './services/geminiService';
 import PriceHistoryModal from './components/PriceHistoryModal';
 import Toast, { ToastType } from './components/Toast';
+import InstallOverlay from './components/InstallOverlay';
 
 const App: React.FC = () => {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(true); // Default true agar tidak flicker
   const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItemHistory, setSelectedItemHistory] = useState<{name: string, data: Receipt[]} | null>(null);
@@ -27,6 +29,17 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    // Cek apakah aplikasi berjalan sebagai PWA (Standalone)
+    const checkStandalone = () => {
+      const isStandaloneMode = 
+        window.matchMedia('(display-mode: standalone)').matches || 
+        (window.navigator as any).standalone || 
+        document.referrer.includes('android-app://');
+      
+      // Khusus untuk development/preview, Anda bisa meng-comment ini jika ingin testing di browser biasa
+      setIsStandalone(isStandaloneMode);
+    };
+
     const startup = async () => {
       try {
         await ensureSchema();
@@ -37,6 +50,8 @@ const App: React.FC = () => {
         setIsReady(true);
       }
     };
+
+    checkStandalone();
     startup();
   }, []);
 
@@ -165,6 +180,8 @@ const App: React.FC = () => {
   const removeManualItem = (index: number) => {
     if (!scannedData?.items) return;
     const newItems = scannedData.items.filter((_, i) => i !== index);
+    
+    // Recalculate total
     const sumItems = newItems.reduce((sum, item) => sum + item.total, 0);
     setScannedData({
       ...scannedData,
@@ -202,7 +219,9 @@ const App: React.FC = () => {
   const updateManualItem = (index: number, field: keyof ReceiptItem, value: any) => {
     if (!scannedData?.items) return;
     const newItems = [...scannedData.items];
-    const newValue = (field === 'name') ? value : (Number(value) || 0);
+    
+    // Fix leading zeros: cast to Number immediately for numeric fields
+    const newValue = (field === 'name') ? value : Number(value);
     
     newItems[index] = { ...newItems[index], [field]: newValue };
     const item = newItems[index];
@@ -214,6 +233,17 @@ const App: React.FC = () => {
       ...scannedData,
       items: newItems,
       total_amount: sumItems - (scannedData.total_discount || 0)
+    });
+  };
+
+  const updateTotalDiscount = (val: string) => {
+    if (!scannedData) return;
+    const discount = Number(val);
+    const sumItems = (scannedData.items || []).reduce((sum, item) => sum + item.total, 0);
+    setScannedData({
+      ...scannedData,
+      total_discount: discount,
+      total_amount: sumItems - discount
     });
   };
 
@@ -242,6 +272,11 @@ const App: React.FC = () => {
         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
+  }
+
+  // Force Install Check
+  if (!isStandalone) {
+    return <InstallOverlay />;
   }
 
   return (
@@ -327,6 +362,7 @@ const App: React.FC = () => {
                       <input type="date" value={scannedData.date} onChange={e => setScannedData({...scannedData, date: e.target.value})} className="w-full bg-transparent text-sm font-bold outline-none" />
                    </div>
                 </div>
+                
                 <div className="bg-slate-50 p-2 rounded-3xl border border-slate-100">
                    <div className="max-h-60 overflow-y-auto no-scrollbar space-y-2 p-1">
                       {scannedData.items?.map((item, idx) => (
@@ -335,11 +371,23 @@ const App: React.FC = () => {
                            <div className="grid grid-cols-3 gap-2">
                               <div className="text-[9px] font-bold">
                                 <span className="text-slate-300">Qty:</span> 
-                                <input type="number" value={item.qty} onChange={e => updateManualItem(idx, 'qty', e.target.value)} className="w-full bg-transparent outline-none" />
+                                <input 
+                                  type="number" 
+                                  value={item.qty === 0 ? "" : item.qty} 
+                                  onChange={e => updateManualItem(idx, 'qty', e.target.value)} 
+                                  onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                                  className="w-full bg-transparent outline-none" 
+                                />
                               </div>
                               <div className="text-[9px] font-bold">
                                 <span className="text-slate-300">Rp</span> 
-                                <input type="number" value={item.unit_price} onChange={e => updateManualItem(idx, 'unit_price', e.target.value)} className="w-full bg-transparent outline-none" />
+                                <input 
+                                  type="number" 
+                                  value={item.unit_price === 0 ? "" : item.unit_price} 
+                                  onChange={e => updateManualItem(idx, 'unit_price', e.target.value)} 
+                                  onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                                  className="w-full bg-transparent outline-none" 
+                                />
                               </div>
                               <div className="text-[9px] font-black text-blue-600 text-right pt-1">Rp {item.total.toLocaleString()}</div>
                            </div>
@@ -349,6 +397,25 @@ const App: React.FC = () => {
                    </div>
                    <button onClick={addManualItem} className="w-full py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">+ Item</button>
                 </div>
+
+                {/* Restore Manual Total Discount Field */}
+                <div className="bg-blue-50/50 p-4 rounded-[2rem] border border-blue-100/50">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-blue-400 uppercase">Diskon Tambahan</span>
+                    <div className="flex items-center gap-1 font-black text-blue-600 italic">
+                      <span>Rp</span>
+                      <input 
+                        type="number" 
+                        value={scannedData.total_discount === 0 ? "" : scannedData.total_discount} 
+                        onChange={e => updateTotalDiscount(e.target.value)}
+                        onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                        placeholder="0"
+                        className="bg-transparent outline-none text-right w-24 placeholder:text-blue-200"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center bg-slate-900 p-6 rounded-[2rem] text-white">
                    <span className="text-[10px] font-black text-slate-400 uppercase">Total Bayar</span>
                    <p className="text-2xl font-black italic">Rp {Number(scannedData.total_amount).toLocaleString()}</p>
