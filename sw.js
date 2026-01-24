@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cekbon-cache-v13';
+const CACHE_NAME = 'cekbon-cache-v14';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -26,12 +26,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // STRATEGI KRUSIAL: Untuk navigasi halaman utama, selalu ambil dari Jaringan (Network First)
+  // Network-First untuk index.html agar selalu mendapat versi terbaru dari Vercel
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // Update cache dengan versi terbaru dari jaringan
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
           return response;

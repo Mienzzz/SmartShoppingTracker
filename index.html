@@ -62,13 +62,13 @@
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "@neondatabase/serverless": "https://esm.sh/@neondatabase/serverless@^1.0.2",
     "uuid": "https://esm.sh/uuid@^13.0.0",
     "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "@neondatabase/serverless": "https://esm.sh/@neondatabase/serverless@^1.0.2"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
@@ -77,7 +77,7 @@
   <div id="root">
     <div class="initial-loader">
       <div style="width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-      <p style="margin-top: 16px; font-weight: 600; font-size: 14px;">Memperbarui Aplikasi...</p>
+      <p style="margin-top: 16px; font-weight: 600; font-size: 14px;">Memuat Aplikasi...</p>
     </div>
   </div>
   
@@ -85,15 +85,19 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Gunakan timestamp untuk memastikan file sw.js yang diambil adalah yang terbaru dari server
-        navigator.serviceWorker.register('./sw.js?v=' + Date.now()).then(reg => {
+        // Mendaftarkan SW tanpa query string dinamis untuk mencegah loop
+        navigator.serviceWorker.register('./sw.js').then(reg => {
           console.log('SW terdaftar');
           
+          // Cek update manual saat aplikasi dibuka
+          reg.update();
+
           reg.onupdatefound = () => {
             const installingWorker = reg.installing;
             installingWorker.onstatechange = () => {
               if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Versi baru terdeteksi, langsung muat ulang halaman
+                // Beritahu user atau reload otomatis hanya JIKA ada update nyata
+                console.log('Versi baru ditemukan, memuat ulang...');
                 window.location.reload();
               }
             };
@@ -101,7 +105,7 @@
         });
       });
 
-      // Paksa refresh jika ada pergantian controller
+      // Menangani pergantian controller (ketika SW baru aktif)
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) {
