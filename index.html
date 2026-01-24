@@ -77,7 +77,7 @@
   <div id="root">
     <div class="initial-loader">
       <div style="width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-      <p style="margin-top: 16px; font-weight: 600; font-size: 14px;">Memuat Aplikasi...</p>
+      <p style="margin-top: 16px; font-weight: 600; font-size: 14px;">Memuat Aplikasi Baru...</p>
     </div>
   </div>
   
@@ -85,27 +85,30 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => {
-            console.log('PWA: Service Worker Aktif');
-            
-            // Logika untuk mendeteksi update dan memaksa refresh
-            reg.onupdatefound = () => {
-              const installingWorker = reg.installing;
-              installingWorker.onstatechange = () => {
-                if (installingWorker.state === 'installed') {
-                  if (navigator.serviceWorker.controller) {
-                    // Update ditemukan, refresh halaman untuk memuat versi baru
-                    console.log('Versi baru ditemukan, memuat ulang...');
-                    window.location.reload();
-                  }
-                }
-              };
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          // Cek pembaruan secara berkala
+          setInterval(() => { reg.update(); }, 1000 * 60 * 60); // Cek tiap jam
+          
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Versi baru siap, beritahu user atau auto-reload
+                console.log('Update ditemukan, menyegarkan...');
+                window.location.reload();
+              }
             };
-          })
-          .catch(err => {
-            console.warn('PWA: Registrasi dilewati');
-          });
+          };
+        });
+      });
+
+      // Menangani pergantian kontroler (ketika sw baru mengambil alih)
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          window.location.reload();
+          refreshing = true;
+        }
       });
     }
   </script>
