@@ -1,11 +1,9 @@
-// Add missing React import to fix namespace errors for React.FC and React.ChangeEvent
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Receipt, ReceiptItem } from './types';
 import { getDeviceId, getReceiptsFromNeon, saveReceiptToNeon, findHistoricalPrices, ensureSchema } from './lib/storage';
 import { analyzeReceipts } from './services/geminiService';
 import PriceHistoryModal from './components/PriceHistoryModal';
 import Toast, { ToastType } from './components/Toast';
-import InstallOverlay from './components/InstallOverlay';
 
 const App: React.FC = () => {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
@@ -82,7 +80,6 @@ const App: React.FC = () => {
   const processAllImages = async () => {
     if (pendingImages.length === 0) return;
     setIsLoading(true);
-    setUploadProgress(20);
     try {
       const data = await analyzeReceipts(pendingImages);
       setScannedData({
@@ -94,10 +91,14 @@ const App: React.FC = () => {
       setShowCapturePreview(false);
       setPendingImages([]);
     } catch (error: any) {
-      showToast("Gagal memproses struk.", "error");
+      if (error.message === "API_KEY_MISSING") {
+        showToast("API Key belum di-set di Vercel!", "error");
+      } else {
+        showToast("Gagal memproses struk. Cek koneksi/API.", "error");
+      }
+      console.error("Processing error:", error);
     } finally {
       setIsLoading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -128,7 +129,6 @@ const App: React.FC = () => {
     if (!scannedData?.items) return;
     const newItems = [...scannedData.items];
     
-    // Perbaikan leading zero: bersihkan non-digit lalu parse ke Number
     let value: any = rawValue;
     if (field !== 'name') {
       const sanitized = rawValue.replace(/[^0-9]/g, '');
@@ -189,16 +189,9 @@ const App: React.FC = () => {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       
       {isLoading && (
-        <div className="fixed inset-0 z-[70] bg-white/90 backdrop-blur-md flex flex-col items-center justify-center p-6">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      )}
-
-      {/* Tampilkan overlay HANYA sebagai saran, jangan menutup akses aplikasi */}
-      {!isStandalone && (
-        <div className="bg-blue-600 text-white p-3 text-center text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-          <span>Pasang CekBon untuk akses fitur penuh</span>
-          <button onClick={() => window.location.reload()} className="bg-white text-blue-600 px-2 py-1 rounded">Instal</button>
+        <div className="fixed inset-0 z-[70] bg-white/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-900 font-black text-sm uppercase tracking-widest">Processing...</p>
         </div>
       )}
 
@@ -220,7 +213,7 @@ const App: React.FC = () => {
                 <span className="text-[10px] font-black uppercase">Tambah</span>
               </button>
             </div>
-            <button onClick={processAllImages} className="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xl shadow-2xl mb-4">PINDAI SEKARANG</button>
+            <button onClick={processAllImages} className="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xl shadow-2xl mb-4 uppercase tracking-widest">PROCESS</button>
             <button onClick={() => {setPendingImages([]); setShowCapturePreview(false);}} className="w-full text-slate-500 font-bold py-2">Batal</button>
           </div>
         </div>
@@ -309,7 +302,6 @@ const App: React.FC = () => {
                    }} className="w-full py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">+ Item Baru</button>
                 </div>
 
-                {/* Diskon Manual Area */}
                 <div className="bg-blue-50/50 p-4 rounded-[2rem] border border-blue-100/50">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black text-blue-400 uppercase">Diskon Global / Potongan</span>
@@ -330,7 +322,7 @@ const App: React.FC = () => {
                    <span className="text-[10px] font-black text-slate-400 uppercase">Total Akhir</span>
                    <p className="text-2xl font-black italic tracking-tighter">Rp {Number(scannedData.total_amount).toLocaleString()}</p>
                 </div>
-                <button onClick={handleSaveReceipt} className="w-full bg-blue-600 text-white font-black py-5 rounded-[2rem] shadow-xl uppercase tracking-widest text-sm active:scale-95 transition-all">Simpan ke Cloud</button>
+                <button onClick={handleSaveReceipt} className="w-full bg-blue-600 text-white font-black py-5 rounded-[2rem] shadow-xl uppercase tracking-widest text-sm active:scale-95 transition-all">SAVE</button>
              </div>
           </div>
         )}

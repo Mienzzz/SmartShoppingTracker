@@ -66,8 +66,8 @@
     "react/": "https://esm.sh/react@^19.2.3/",
     "@neondatabase/serverless": "https://esm.sh/@neondatabase/serverless@^1.0.2",
     "uuid": "https://esm.sh/uuid@^13.0.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
     "vite": "https://esm.sh/vite@^7.3.1",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
@@ -85,13 +85,11 @@
   <script type="module" src="/index.tsx"></script>
 
   <script>
-    // Registrasi Service Worker yang lebih stabil tanpa auto-reload loop
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .then(reg => {
             console.log('CekBon SW: Aktif');
-            // Cek pembaruan di background tanpa mengganggu user
             reg.update();
           })
           .catch(err => console.error('CekBon SW Error:', err));
