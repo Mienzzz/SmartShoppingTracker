@@ -1,37 +1,42 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Smart Shopping Tracker</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Smart Shopping Tracker</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CDN (OK) -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#2563eb" />
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2563eb" />
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f8fafc;
-    }
-    .safe-area-bottom {
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc;
+      }
+      .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
 
-  <!-- INI PENTING -->
-  <script type="module" src="/src/main.tsx"></script>
-</body>
+    <!-- ⚠️ BIARKAN VITE YANG HANDLE ENTRY -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
