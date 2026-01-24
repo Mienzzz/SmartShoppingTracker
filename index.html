@@ -85,17 +85,26 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Menggunakan path absolut dari origin untuk menghindari 'same-origin' scope error
-        const swPath = window.location.pathname.endsWith('/') 
-          ? window.location.pathname + 'sw.js' 
-          : window.location.pathname.split('/').slice(0, -1).join('/') + '/sw.js';
-        
-        navigator.serviceWorker.register('sw.js')
+        navigator.serviceWorker.register('./sw.js')
           .then(reg => {
             console.log('PWA: Service Worker Aktif');
+            
+            // Logika untuk mendeteksi update dan memaksa refresh
+            reg.onupdatefound = () => {
+              const installingWorker = reg.installing;
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed') {
+                  if (navigator.serviceWorker.controller) {
+                    // Update ditemukan, refresh halaman untuk memuat versi baru
+                    console.log('Versi baru ditemukan, memuat ulang...');
+                    window.location.reload();
+                  }
+                }
+              };
+            };
           })
           .catch(err => {
-            console.warn('PWA: Registrasi dilewati (mode dev atau error origin)');
+            console.warn('PWA: Registrasi dilewati');
           });
       });
     }
