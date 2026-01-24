@@ -23,5 +23,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#2563eb",
-  "background_color": "#f8fafc"
+  "background_color": "#f8fafc",
+  "categories": ["finance", "utilities"],
+  "prefer_related_applications": false
 }

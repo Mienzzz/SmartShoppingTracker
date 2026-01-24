@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="BillCapture">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="BillCapture">
   
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.json" />
@@ -102,10 +103,14 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Scope '/' sangat penting agar dianggap PWA oleh browser mobile
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-          .then(reg => console.log('PWA Service Worker Aktif:', reg.scope))
-          .catch(err => console.warn('PWA Registration Skip:', err.message));
+        // Menggunakan root sebagai scope agar seluruh aplikasi ter-cover sebagai PWA
+        navigator.serviceWorker.register('./sw.js', { scope: '/' })
+          .then(reg => {
+            console.log('PWA Service Worker Aktif:', reg.scope);
+          })
+          .catch(err => {
+            console.warn('PWA Registration Error:', err.message);
+          });
       });
     }
   </script>
