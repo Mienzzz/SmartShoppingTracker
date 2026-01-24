@@ -1,9 +1,9 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 
 export const analyzeReceipts = async (base64Images: string[]) => {
   const apiKey = process.env.API_KEY;
   
-  // Deteksi jika API Key kosong (biasanya terjadi di Vercel jika belum di-set)
   if (!apiKey || apiKey.trim() === "") {
     throw new Error("API_KEY_MISSING");
   }
@@ -24,12 +24,13 @@ export const analyzeReceipts = async (base64Images: string[]) => {
         parts: [
           ...imageParts,
           {
-            text: `Ekstrak data dari struk belanja ini ke JSON murni. 
-            Pastikan: 
-            1. total_amount adalah angka akhir yang dibayar oleh pelanggan.
-            2. item.discount adalah nominal diskon khusus per baris barang (0 jika tidak ada).
-            3. item.total adalah (qty * unit_price) - discount.
-            4. total_discount adalah total diskon global (seperti diskon member, voucher, atau potongan belanja langsung di akhir struk).`
+            text: `Extract data from these receipt images into pure JSON. 
+            RULES:
+            - date MUST be in 'YYYY-MM-DD' format ONLY (e.g., 2024-10-25). No time, no dots, no slashes.
+            - total_amount is the final price paid.
+            - item.discount is numeric discount for that item (0 if none).
+            - item.total is (qty * unit_price) - discount.
+            - total_discount is the GLOBAL discount (voucher/points/final cut) found at the bottom of the receipt.`
           }
         ]
       },
@@ -39,7 +40,7 @@ export const analyzeReceipts = async (base64Images: string[]) => {
           type: Type.OBJECT,
           properties: {
             store_name: { type: Type.STRING },
-            date: { type: Type.STRING },
+            date: { type: Type.STRING, description: "Format YYYY-MM-DD" },
             total_amount: { type: Type.NUMBER },
             total_discount: { type: Type.NUMBER },
             items: {
@@ -65,13 +66,12 @@ export const analyzeReceipts = async (base64Images: string[]) => {
     const text = response.text;
     if (!text) throw new Error("EMPTY_RESPONSE");
     
-    // Ekstraksi JSON yang lebih aman: ambil teks di antara kurung kurawal pertama dan terakhir
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("INVALID_JSON_FORMAT");
     
     return JSON.parse(jsonMatch[0]);
   } catch (error: any) {
-    console.error("Gemini Scan Detail Error:", error);
+    console.error("Gemini Scan Error:", error);
     throw error;
   }
 };

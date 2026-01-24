@@ -1,10 +1,10 @@
+
 import { neon } from '@neondatabase/serverless';
 import { v4 as uuidv4 } from 'uuid';
 import { Receipt } from '../types';
 
 const DATABASE_URL = 'postgresql://neondb_owner:npg_TveYL6pSQ1aU@ep-tiny-violet-ah8rr2da-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require';
 
-// Pastikan variabel SQL hanya dibuat sekali
 const sql = neon(DATABASE_URL);
 const DEVICE_ID_KEY = 'smart_shopping_device_id';
 
@@ -19,14 +19,13 @@ export const getDeviceId = (): string => {
 
 export const ensureSchema = async () => {
   try {
-    // Jalankan perintah schema dasar
+    // 1. Create tables if not exist
     await sql`
       CREATE TABLE IF NOT EXISTS receipts (
         id SERIAL PRIMARY KEY,
         date DATE NOT NULL,
         store_name TEXT NOT NULL,
         total_amount NUMERIC NOT NULL,
-        total_discount NUMERIC DEFAULT 0,
         device_id TEXT NOT NULL
       );
     `;
@@ -37,18 +36,25 @@ export const ensureSchema = async () => {
         name TEXT NOT NULL,
         qty NUMERIC NOT NULL,
         unit_price NUMERIC NOT NULL,
-        discount NUMERIC DEFAULT 0,
         total NUMERIC NOT NULL
       );
     `;
+
+    // 2. Migration: Pastikan kolom diskon ada (jika tabel lama sudah ada)
+    try {
+      await sql`ALTER TABLE receipts ADD COLUMN IF NOT EXISTS total_discount NUMERIC DEFAULT 0;`;
+      await sql`ALTER TABLE receipt_items ADD COLUMN IF NOT EXISTS discount NUMERIC DEFAULT 0;`;
+    } catch (e) {
+      console.log("Migration check completed (columns might already exist)");
+    }
   } catch (error) {
     console.error("Database Schema Error:", error);
-    // Jangan lempar error agar aplikasi tetap bisa terbuka meski DB sedang bermasalah
   }
 };
 
 export const saveReceiptToNeon = async (receipt: Omit<Receipt, 'id'>) => {
   const deviceId = getDeviceId();
+  // Gunakan total_discount atau default 0
   const receiptRows = await sql`
     INSERT INTO receipts (date, store_name, total_amount, total_discount, device_id)
     VALUES (${receipt.date}, ${receipt.store_name}, ${receipt.total_amount}, ${receipt.total_discount || 0}, ${deviceId})
@@ -97,7 +103,7 @@ export const getReceiptsFromNeon = async (): Promise<Receipt[]> => {
           name: i.name,
           qty: Number(i.qty),
           unit_price: Number(i.unit_price),
-          discount: Number(i.discount),
+          discount: Number(i.discount || 0),
           total: Number(i.total)
         }))
     })) as Receipt[];
@@ -140,7 +146,7 @@ export const findHistoricalPrices = async (itemName: string): Promise<Receipt[]>
           name: i.name,
           qty: Number(i.qty),
           unit_price: Number(i.unit_price),
-          discount: Number(i.discount),
+          discount: Number(i.discount || 0),
           total: Number(i.total)
         }))
     })) as Receipt[];

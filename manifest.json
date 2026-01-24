@@ -1,5 +1,6 @@
+
 {
-  "id": "com.billcapture.privatecloud.v1",
+  "id": "bill-capture-pwa-v1",
   "short_name": "BillCapture",
   "name": "Bill Capture Private Cloud",
   "description": "Smart Receipt Tracker & Price History Analyzer",
@@ -17,12 +18,10 @@
       "purpose": "maskable any"
     }
   ],
-  "start_url": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay"],
   "orientation": "portrait",
   "theme_color": "#2563eb",
-  "background_color": "#f8fafc",
-  "categories": ["finance", "utilities"],
-  "prefer_related_applications": false
+  "background_color": "#f8fafc"
 }
