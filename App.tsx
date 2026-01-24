@@ -62,13 +62,51 @@ const App: React.FC = () => {
     setReceipts(data || []);
   };
 
+  // Fungsi utilitas untuk mengompres gambar sebelum disimpan ke state
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200; // Cukup besar untuk dibaca AI, cukup kecil untuk RAM
+          const MAX_HEIGHT = 1600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Export sebagai JPEG dengan kualitas 0.7 (menghemat memori sangat banyak)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(dataUrl.split(',')[1]); // Kembalikan base64 murni
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
   const normalizeDate = (dateStr: string | undefined): string => {
     if (!dateStr) return new Date().toISOString().split('T')[0];
-    
-    // Bersihkan karakter non-digit kecuali pemisah dasar
-    const clean = dateStr.replace(/[^0-9\-.]/g, '-').split('-')[0]; // Ambil bagian awal jika ada jam
-    
-    // Coba deteksi format DD.MM.YY atau DD.MM.YYYY
+    const clean = dateStr.replace(/[^0-9\-.]/g, '-').split('-')[0];
     if (dateStr.includes('.')) {
       const parts = dateStr.split(/[.\-]/);
       if (parts.length >= 3) {
@@ -76,26 +114,30 @@ const App: React.FC = () => {
         let month = parts[1].padStart(2, '0');
         let year = parts[2].substring(0, 4);
         if (year.length === 2) year = "20" + year;
-        // Jika formatnya ternyata MM.DD.YY (USA), user mungkin perlu cek, tapi kita asumsikan DD.MM.YY (ID)
         return `${year}-${month}-${day}`;
       }
     }
-
     const d = new Date(dateStr);
     return isNaN(d.getTime()) ? new Date().toISOString().split('T')[0] : d.toISOString().split('T')[0];
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(',')[1];
-      setPendingImages(prev => [...prev, base64]);
+    
+    setIsLoading(true);
+    try {
+      // Kompres gambar SEBELUM menyimpannya ke state pendingImages
+      const compressedBase64 = await compressImage(file);
+      setPendingImages(prev => [...prev, compressedBase64]);
       setShowCapturePreview(true);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+    } catch (error) {
+      console.error("Compression error:", error);
+      showToast("Gagal memproses gambar. Coba lagi.", "error");
+    } finally {
+      setIsLoading(false);
+      e.target.value = ''; // Reset input agar bisa ambil gambar yang sama
+    }
   };
 
   const triggerCamera = () => fileInputRef.current?.click();
