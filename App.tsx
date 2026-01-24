@@ -11,7 +11,7 @@ const App: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(true); // Default true agar tidak flicker
+  const [isStandalone, setIsStandalone] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItemHistory, setSelectedItemHistory] = useState<{name: string, data: Receipt[]} | null>(null);
@@ -29,14 +29,13 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Cek apakah aplikasi berjalan sebagai PWA (Standalone)
     const checkStandalone = () => {
       const isStandaloneMode = 
         window.matchMedia('(display-mode: standalone)').matches || 
-        (window.navigator as any).standalone || 
-        document.referrer.includes('android-app://');
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://') ||
+        window.location.search.includes('source=pwa');
       
-      // Khusus untuk development/preview, Anda bisa meng-comment ini jika ingin testing di browser biasa
       setIsStandalone(isStandaloneMode);
     };
 
@@ -116,13 +115,7 @@ const App: React.FC = () => {
     } catch (error: any) {
       console.error("Processing failed:", error);
       let msg = "Gagal memproses foto. Pastikan tulisan jelas.";
-      
-      if (error.message === "API_KEY_MISSING") {
-        msg = "Error: API_KEY belum di-set di Vercel.";
-      } else if (error.message?.includes("403") || error.message?.includes("API_KEY_INVALID")) {
-        msg = "Error: API_KEY tidak valid.";
-      }
-
+      if (error.message === "API_KEY_MISSING") msg = "Error: API_KEY belum di-set di Vercel.";
       showToast(msg, "error");
     } finally {
       setIsLoading(false);
@@ -180,8 +173,6 @@ const App: React.FC = () => {
   const removeManualItem = (index: number) => {
     if (!scannedData?.items) return;
     const newItems = scannedData.items.filter((_, i) => i !== index);
-    
-    // Recalculate total
     const sumItems = newItems.reduce((sum, item) => sum + item.total, 0);
     setScannedData({
       ...scannedData,
@@ -216,19 +207,22 @@ const App: React.FC = () => {
     setIsScanning(true);
   };
 
-  const updateManualItem = (index: number, field: keyof ReceiptItem, value: any) => {
+  // Improved numeric input update to prevent leading zeros
+  const updateManualItem = (index: number, field: keyof ReceiptItem, rawValue: string) => {
     if (!scannedData?.items) return;
     const newItems = [...scannedData.items];
     
-    // Fix leading zeros: cast to Number immediately for numeric fields
-    const newValue = (field === 'name') ? value : Number(value);
+    let value: any = rawValue;
+    if (field !== 'name') {
+      // Force conversion to number and remove non-digits if necessary
+      value = Number(rawValue.replace(/[^0-9]/g, '')) || 0;
+    }
     
-    newItems[index] = { ...newItems[index], [field]: newValue };
+    newItems[index] = { ...newItems[index], [field]: value };
     const item = newItems[index];
     item.total = (item.qty * item.unit_price) - (item.discount || 0);
 
     const sumItems = newItems.reduce((sum, item) => sum + item.total, 0);
-    
     setScannedData({
       ...scannedData,
       items: newItems,
@@ -238,7 +232,7 @@ const App: React.FC = () => {
 
   const updateTotalDiscount = (val: string) => {
     if (!scannedData) return;
-    const discount = Number(val);
+    const discount = Number(val.replace(/[^0-9]/g, '')) || 0;
     const sumItems = (scannedData.items || []).reduce((sum, item) => sum + item.total, 0);
     setScannedData({
       ...scannedData,
@@ -274,7 +268,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Force Install Check
   if (!isStandalone) {
     return <InstallOverlay />;
   }
@@ -302,7 +295,7 @@ const App: React.FC = () => {
       {showCapturePreview && (
         <div className="fixed inset-0 z-[60] bg-slate-950 flex flex-col p-6 overflow-y-auto">
           <div className="max-w-md mx-auto w-full flex-1 flex flex-col py-10">
-            <h2 className="text-white text-2xl font-black text-center mb-8 italic">REVIEW FOTO</h2>
+            <h2 className="text-white text-2xl font-black text-center mb-8 italic uppercase">Review Foto</h2>
             <div className="grid grid-cols-2 gap-4 mb-10">
               {pendingImages.map((img, idx) => (
                 <div key={idx} className="relative aspect-[3/4] rounded-3xl overflow-hidden border-2 border-slate-800">
@@ -327,7 +320,7 @@ const App: React.FC = () => {
         <div className="flex justify-between items-end max-w-2xl mx-auto">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tighter leading-none italic">CEK BON</h1>
-            <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em] mt-2">Smart Cloud Storage</p>
+            <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em] mt-2">PWA Private Cloud</p>
           </div>
           <div className="text-right">
             <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Total Bulan Ini</p>
@@ -374,8 +367,7 @@ const App: React.FC = () => {
                                 <input 
                                   type="number" 
                                   value={item.qty === 0 ? "" : item.qty} 
-                                  onChange={e => updateManualItem(idx, 'qty', e.target.value)} 
-                                  onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                                  onChange={e => updateManualItem(idx, 'qty', e.target.value)}
                                   className="w-full bg-transparent outline-none" 
                                 />
                               </div>
@@ -384,8 +376,7 @@ const App: React.FC = () => {
                                 <input 
                                   type="number" 
                                   value={item.unit_price === 0 ? "" : item.unit_price} 
-                                  onChange={e => updateManualItem(idx, 'unit_price', e.target.value)} 
-                                  onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                                  onChange={e => updateManualItem(idx, 'unit_price', e.target.value)}
                                   className="w-full bg-transparent outline-none" 
                                 />
                               </div>
@@ -398,7 +389,6 @@ const App: React.FC = () => {
                    <button onClick={addManualItem} className="w-full py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">+ Item</button>
                 </div>
 
-                {/* Restore Manual Total Discount Field */}
                 <div className="bg-blue-50/50 p-4 rounded-[2rem] border border-blue-100/50">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] font-black text-blue-400 uppercase">Diskon Tambahan</span>
@@ -408,7 +398,6 @@ const App: React.FC = () => {
                         type="number" 
                         value={scannedData.total_discount === 0 ? "" : scannedData.total_discount} 
                         onChange={e => updateTotalDiscount(e.target.value)}
-                        onFocus={e => e.target.value === "0" && (e.target.value = "")}
                         placeholder="0"
                         className="bg-transparent outline-none text-right w-24 placeholder:text-blue-200"
                       />
