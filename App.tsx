@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Receipt, ReceiptItem } from './types';
 import { getDeviceId, getReceiptsFromNeon, saveReceiptToNeon, findHistoricalPrices, ensureSchema } from './lib/storage';
 import { analyzeReceipts } from './services/geminiService';
 import PriceHistoryModal from './components/PriceHistoryModal';
+import Toast, { ToastType } from './components/Toast';
 
 const App: React.FC = () => {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
@@ -20,17 +20,24 @@ const App: React.FC = () => {
   const [showCapturePreview, setShowCapturePreview] = useState(false);
   const [scannedData, setScannedData] = useState<Partial<Receipt> | null>(null);
 
+  // Toast State
+  const [toast, setToast] = useState<{message: string, type: ToastType} | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
     const startup = async () => {
       try {
-        // Pastikan tabel dan kolom ada sebelum load data
         await ensureSchema();
         await loadReceipts();
         setIsReady(true);
       } catch (e) {
         console.error("Startup error", e);
+        showToast("Database sedang sibuk. Mencoba memuat...", "info");
         setIsReady(true); 
       }
     };
@@ -99,10 +106,11 @@ const App: React.FC = () => {
         setIsLoading(false);
         setUploadProgress(0);
         setPendingImages([]);
+        showToast("Berhasil memindai struk!", "success");
       }, 500);
     } catch (error) {
       console.error("Analisa AI gagal:", error);
-      alert("Gagal memindai struk. Pastikan foto jelas dan koneksi stabil.");
+      showToast("Foto kurang jelas atau koneksi terputus.", "error");
       setIsLoading(false);
       setUploadProgress(0);
       setShowCapturePreview(true);
@@ -165,7 +173,7 @@ const App: React.FC = () => {
 
   const handleSaveReceipt = async () => {
     if (!scannedData || !scannedData.items || scannedData.items.length === 0) {
-        alert("Bon harus berisi barang.");
+        showToast("Daftar barang tidak boleh kosong.", "error");
         return;
     }
     
@@ -183,20 +191,18 @@ const App: React.FC = () => {
         device_id: deviceId
       };
 
-      // Simpan data
       await saveReceiptToNeon(newReceiptData);
       setUploadProgress(100);
       
-      // Bersihkan state form SEGERA setelah save berhasil
       setScannedData(null);
       setIsScanning(false);
       
-      // Refresh list
       await loadReceipts(); 
+      showToast("Tersimpan ke Cloud!", "success");
       
     } catch (error: any) {
       console.error("Gagal menyimpan:", error);
-      alert(`Gagal menyimpan ke cloud: ${error.message || 'Cek koneksi internet Anda.'}`);
+      showToast("Gagal menyimpan. Cek koneksi Anda.", "error");
     } finally {
       setIsLoading(false);
       setUploadProgress(0);
@@ -209,9 +215,12 @@ const App: React.FC = () => {
     setIsLoading(true);
     try {
       const history = await findHistoricalPrices(query);
+      if (history.length === 0) {
+        showToast("Belum ada riwayat untuk item ini.", "info");
+      }
       setSelectedItemHistory({ name: query, data: history });
     } catch (e) {
-      alert("Gagal mengambil riwayat harga.");
+      showToast("Gagal mencari riwayat harga.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -257,6 +266,15 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-40 safe-area-bottom">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+
       {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 z-[60] bg-white/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
