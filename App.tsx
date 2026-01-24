@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Receipt, ReceiptItem } from './types';
 import { getDeviceId, getReceiptsFromNeon, saveReceiptToNeon, findHistoricalPrices, ensureSchema } from './lib/storage';
@@ -67,7 +66,6 @@ const App: React.FC = () => {
       showToast("Foto berhasil diambil", "success");
     };
     reader.readAsDataURL(file);
-    // Reset value agar bisa pilih file yang sama jika gagal
     e.target.value = '';
   };
 
@@ -102,9 +100,14 @@ const App: React.FC = () => {
       showToast("Data berhasil diekstrak", "success");
     } catch (error: any) {
       console.error("Processing failed:", error);
-      const msg = error.message === "API_KEY_MISSING" 
-        ? "API Key tidak diset." 
-        : "Gagal memproses foto. Pastikan tulisan jelas.";
+      let msg = "Gagal memproses foto. Pastikan tulisan jelas.";
+      
+      if (error.message === "API_KEY_MISSING") {
+        msg = "Error: API_KEY belum di-set di Vercel.";
+      } else if (error.message?.includes("403") || error.message?.includes("API_KEY_INVALID")) {
+        msg = "Error: API_KEY tidak valid.";
+      }
+
       showToast(msg, "error");
     } finally {
       setIsLoading(false);
@@ -142,7 +145,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Added checkPrice to search historical prices for an item
   const checkPrice = async (name: string) => {
     if (!name.trim()) return;
     setIsLoading(true);
@@ -156,12 +158,10 @@ const App: React.FC = () => {
     }
   };
 
-  // Added toggleExpand to expand/collapse receipt details in the list
   const toggleExpand = (id: string) => {
     setExpandedReceiptId(expandedReceiptId === id ? null : id);
   };
 
-  // Added removeManualItem to delete an item from the current scan/edit session
   const removeManualItem = (index: number) => {
     if (!scannedData?.items) return;
     const newItems = scannedData.items.filter((_, i) => i !== index);
@@ -173,7 +173,6 @@ const App: React.FC = () => {
     });
   };
 
-  // Added addManualItem to append a new empty item to the current scan/edit session
   const addManualItem = () => {
     const newItem: ReceiptItem = {
       name: '',
@@ -189,7 +188,6 @@ const App: React.FC = () => {
     } as Partial<Receipt>);
   };
 
-  // Added handleManualInput to start a new receipt entry manually
   const handleManualInput = () => {
     setScannedData({
       store_name: '',
@@ -248,26 +246,10 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-40">
-      {/* Hidden File Input */}
-      <input 
-        type="file" 
-        accept="image/*" 
-        capture="environment" 
-        className="hidden" 
-        ref={fileInputRef} 
-        onChange={handleFileChange} 
-      />
+      <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
 
-      {/* Toast - diletakkan paling atas secara hierarki */}
-      {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* Loading */}
       {isLoading && (
         <div className="fixed inset-0 z-[70] bg-white/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
           <div className="w-full max-w-xs">
@@ -282,7 +264,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Capture Preview */}
       {showCapturePreview && (
         <div className="fixed inset-0 z-[60] bg-slate-950 flex flex-col p-6 overflow-y-auto">
           <div className="max-w-md mx-auto w-full flex-1 flex flex-col py-10">
@@ -291,10 +272,7 @@ const App: React.FC = () => {
               {pendingImages.map((img, idx) => (
                 <div key={idx} className="relative aspect-[3/4] rounded-3xl overflow-hidden border-2 border-slate-800">
                   <img src={`data:image/jpeg;base64,${img}`} className="w-full h-full object-cover" />
-                  <button 
-                    onClick={() => setPendingImages(prev => prev.filter((_, i) => i !== idx))}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-xl"
-                  >
+                  <button onClick={() => setPendingImages(prev => prev.filter((_, i) => i !== idx))} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-xl">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="3"/></svg>
                   </button>
                 </div>
@@ -310,7 +288,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Main Header */}
       <header className="bg-white px-6 pt-12 pb-6 border-b border-slate-100 sticky top-0 z-30">
         <div className="flex justify-between items-end max-w-2xl mx-auto">
           <div>
@@ -327,20 +304,11 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-2xl mx-auto p-4 md:p-6">
-        {/* Search */}
         <div className="bg-white p-1 rounded-3xl shadow-sm border border-slate-100 flex items-center mb-6">
-          <input
-            type="text"
-            placeholder="Cari item di riwayat..."
-            className="flex-1 px-5 py-4 text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:outline-none"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && checkPrice(searchQuery)}
-          />
+          <input type="text" placeholder="Cari item di riwayat..." className="flex-1 px-5 py-4 text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:outline-none" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && checkPrice(searchQuery)} />
           <button onClick={() => checkPrice(searchQuery)} className="mr-1 bg-slate-900 text-white px-6 py-4 rounded-[1.2rem] text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">CEK</button>
         </div>
 
-        {/* Manual Edit Screen */}
         {isScanning && scannedData && (
           <div className="bg-white rounded-[2.5rem] p-6 border border-blue-100 shadow-2xl mb-6 relative">
              <div className="absolute top-0 left-0 right-0 h-1.5 bg-blue-600 rounded-t-[2.5rem]"></div>
@@ -365,9 +333,15 @@ const App: React.FC = () => {
                         <div key={idx} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 relative">
                            <input value={item.name} onChange={e => updateManualItem(idx, 'name', e.target.value)} className="w-full text-xs font-black mb-2 outline-none" />
                            <div className="grid grid-cols-3 gap-2">
-                              <div className="text-[9px] font-bold"><span className="text-slate-300">Qty:</span> <input type="number" value={item.qty} onChange={e => updateManualItem(idx, 'qty', e.target.value)} className="w-8 outline-none" /></div>
-                              <div className="text-[9px] font-bold"><span className="text-slate-300">Rp</span> <input type="number" value={item.unit_price} onChange={e => updateManualItem(idx, 'unit_price', e.target.value)} className="w-16 outline-none" /></div>
-                              <div className="text-[9px] font-black text-blue-600 text-right">Rp {item.total.toLocaleString()}</div>
+                              <div className="text-[9px] font-bold">
+                                <span className="text-slate-300">Qty:</span> 
+                                <input type="number" value={item.qty} onChange={e => updateManualItem(idx, 'qty', e.target.value)} className="w-full bg-transparent outline-none" />
+                              </div>
+                              <div className="text-[9px] font-bold">
+                                <span className="text-slate-300">Rp</span> 
+                                <input type="number" value={item.unit_price} onChange={e => updateManualItem(idx, 'unit_price', e.target.value)} className="w-full bg-transparent outline-none" />
+                              </div>
+                              <div className="text-[9px] font-black text-blue-600 text-right pt-1">Rp {item.total.toLocaleString()}</div>
                            </div>
                            <button onClick={() => removeManualItem(idx)} className="absolute top-2 right-2 text-red-300"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="3"/></svg></button>
                         </div>
@@ -384,7 +358,6 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* List Section */}
         {!isScanning && !showCapturePreview && (
           <div className="space-y-4">
              {filteredReceipts.map(receipt => (
@@ -417,7 +390,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Main Action Bar */}
       {!isScanning && !showCapturePreview && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 z-40 bg-white/80 backdrop-blur-xl p-3 rounded-[3rem] shadow-2xl border border-white/50">
           <button onClick={handleManualInput} className="p-5 bg-slate-100 text-slate-400 rounded-full active:scale-90 transition-all">
@@ -426,7 +398,7 @@ const App: React.FC = () => {
           <button onClick={triggerCamera} className="bg-slate-900 text-white p-6 rounded-full shadow-2xl ring-8 ring-blue-600/10 active:scale-95 transition-all">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" strokeWidth="3"/></svg>
           </button>
-          <div className="w-16"></div> {/* Spacer untuk keseimbangan visual */}
+          <div className="w-16"></div>
         </div>
       )}
 

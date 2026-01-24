@@ -1,9 +1,14 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 export const analyzeReceipts = async (base64Images: string[]) => {
-  // Use process.env.API_KEY directly in the constructor as per guidelines
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  const apiKey = process.env.API_KEY;
+  
+  // Deteksi jika API Key kosong (biasanya terjadi di Vercel jika belum di-set)
+  if (!apiKey || apiKey.trim() === "") {
+    throw new Error("API_KEY_MISSING");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const imageParts = base64Images.map(base64 => ({
     inlineData: {
@@ -59,11 +64,13 @@ export const analyzeReceipts = async (base64Images: string[]) => {
     const text = response.text;
     if (!text) throw new Error("EMPTY_RESPONSE");
     
-    // Hilangkan blok markdown jika ada
-    const cleanJson = text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
-    return JSON.parse(cleanJson);
-  } catch (error) {
-    console.error("Gemini Scan Error:", error);
+    // Ekstraksi JSON yang lebih aman: ambil teks di antara kurung kurawal pertama dan terakhir
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("INVALID_JSON_FORMAT");
+    
+    return JSON.parse(jsonMatch[0]);
+  } catch (error: any) {
+    console.error("Gemini Scan Detail Error:", error);
     throw error;
   }
 };

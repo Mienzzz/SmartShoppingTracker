@@ -32,6 +32,16 @@
       scrollbar-width: none;
     }
     
+    /* Sembunyikan panah input number */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
     .initial-loader {
       display: flex;
       flex-direction: column;
