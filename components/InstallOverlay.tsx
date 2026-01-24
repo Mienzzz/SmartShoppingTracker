@@ -11,7 +11,7 @@ const InstallOverlay: React.FC = () => {
         </svg>
       </div>
       
-      <h1 className="text-3xl font-black italic mb-4 tracking-tighter uppercase">Instal CekBon</h1>
+      <h1 className="text-3xl font-black italic mb-4 tracking-tighter uppercase">Instal Bill Capture</h1>
       <p className="text-blue-100 font-medium mb-12 max-w-xs">
         Aplikasi ini didesain sebagai aplikasi cloud privat. Silakan instal ke layar utama untuk pengalaman terbaik dan fitur kamera yang stabil.
       </p>
@@ -44,7 +44,7 @@ const InstallOverlay: React.FC = () => {
         )}
       </div>
 
-      <p className="mt-8 text-[10px] font-black uppercase tracking-[0.3em] opacity-50">CekBon v1.0 • PWA Cloud</p>
+      <p className="mt-8 text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Bill Capture v1.0 • PWA Cloud</p>
     </div>
   );
 };

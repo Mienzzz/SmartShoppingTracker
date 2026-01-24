@@ -1,6 +1,6 @@
 {
-  "name": "Smart Shopping Tracker",
-  "description": "Scan and track supermarket receipts to compare historical prices and manage your monthly budget.",
+  "name": "Bill Capture",
+  "description": "Scan and track supermarket receipts to compare historical prices and manage your shopping records privately.",
   "requestFramePermissions": [
     "camera"
   ]

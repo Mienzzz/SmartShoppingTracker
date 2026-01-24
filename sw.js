@@ -1,37 +1,48 @@
-const CACHE_NAME = 'cekbon-cache-v16';
+const CACHE_NAME = 'billcapture-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  'index.html',
+  'manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
-  // Biarkan SW baru menginstal tapi jangan paksa aktif langsung jika ada tab lain terbuka
-  // Ini mencegah loop reload yang agresif
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) => {
+      // Use relative paths to ensure same-origin fetching during install
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys.map((key) => {
-        if (key !== CACHE_NAME) {
-          console.log('Menghapus cache lama:', key);
-          return caches.delete(key);
-        }
-      })
-    ))
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // Strategi Stale-While-Revalidate untuk aset agar cepat tapi tetap terupdate
+  if (event.request.method !== 'GET') return;
+  
+  const url = new URL(event.request.url);
+  
+  // Skip cross-origin requests to prevent same-origin or CORS errors within the worker
+  if (url.origin !== self.location.origin) return;
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -39,8 +50,6 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => null);
-
-      return cachedResponse || fetchPromise;
     })
   );
 });
