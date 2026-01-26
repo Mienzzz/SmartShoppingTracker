@@ -62,45 +62,54 @@ const App: React.FC = () => {
     setReceipts(data || []);
   };
 
-  // Fungsi utilitas untuk mengompres gambar sebelum disimpan ke state
+  // VERSI OPTIMASI MEMORI: Menggunakan ObjectURL (Bukan FileReader)
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200; // Cukup besar untuk dibaca AI, cukup kecil untuk RAM
-          const MAX_HEIGHT = 1600;
-          let width = img.width;
-          let height = img.height;
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.src = url;
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1024; // Resolusi cukup untuk OCR tapi irit RAM
+        const MAX_HEIGHT = 1280;
+        let width = img.width;
+        let height = img.height;
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
           }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
 
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          // Export sebagai JPEG dengan kualitas 0.7 (menghemat memori sangat banyak)
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-          resolve(dataUrl.split(',')[1]); // Kembalikan base64 murni
-        };
-        img.onerror = reject;
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject("Canvas context fail");
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Export ke JPEG 0.6 (sangat efisien memori)
+        const base64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+        
+        // BERSIHKAN MEMORI
+        URL.revokeObjectURL(url);
+        img.src = "";
+        canvas.width = 0;
+        canvas.height = 0;
+        
+        resolve(base64);
       };
-      reader.onerror = reject;
+      img.onerror = (e) => {
+        URL.revokeObjectURL(url);
+        reject(e);
+      };
     });
   };
 
@@ -127,16 +136,15 @@ const App: React.FC = () => {
     
     setIsLoading(true);
     try {
-      // Kompres gambar SEBELUM menyimpannya ke state pendingImages
       const compressedBase64 = await compressImage(file);
       setPendingImages(prev => [...prev, compressedBase64]);
       setShowCapturePreview(true);
     } catch (error) {
-      console.error("Compression error:", error);
-      showToast("Gagal memproses gambar. Coba lagi.", "error");
+      console.error("Image processing error:", error);
+      showToast("HP kehabisan memori. Coba foto ulang dengan resolusi lebih rendah jika bisa.", "error");
     } finally {
       setIsLoading(false);
-      e.target.value = ''; // Reset input agar bisa ambil gambar yang sama
+      e.target.value = ''; 
     }
   };
 
@@ -188,7 +196,7 @@ const App: React.FC = () => {
       showToast("Tersimpan!", "success");
     } catch (error: any) {
       console.error("Save error:", error);
-      showToast("Gagal simpan: format data salah", "error");
+      showToast("Gagal simpan ke database.", "error");
     } finally {
       setIsLoading(false);
     }
