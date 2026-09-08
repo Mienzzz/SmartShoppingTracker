@@ -11,7 +11,7 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-192.png",
+      "src": "/icon-maskable-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "maskable"
@@ -23,10 +23,26 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-maskable-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-narrow.png",
+      "type": "image/png",
+      "sizes": "540x960",
+      "form_factor": "narrow",
+      "label": "Tampilan Aplikasi Mobile"
+    },
+    {
+      "src": "/screenshot-wide.png",
+      "type": "image/png",
+      "sizes": "1024x576",
+      "form_factor": "wide",
+      "label": "Tampilan Aplikasi Desktop"
     }
   ],
   "start_url": "/",

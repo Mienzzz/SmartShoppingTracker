@@ -1,17 +1,27 @@
-const CACHE_NAME = 'billcapture-v8';
+const CACHE_NAME = 'billcapture-v9';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/apple-touch-icon.png'
+  '/icon-maskable-192.png',
+  '/icon-maskable-512.png',
+  '/apple-touch-icon.png',
+  '/screenshot-narrow.png',
+  '/screenshot-wide.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const asset of PRECACHE_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (err) {
+          console.warn('Precache skip for:', asset, err);
+        }
+      }
     }).then(() => self.skipWaiting())
   );
 });

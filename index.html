@@ -107,15 +107,24 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+      const registerSW = () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' })
           .then(reg => {
             console.log('PWA Service Worker Aktif:', reg.scope);
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
           })
           .catch(err => {
             console.warn('PWA Registration Error:', err.message);
           });
-      });
+      };
+
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+      }
     }
   </script>
 </body>
