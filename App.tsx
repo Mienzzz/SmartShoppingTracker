@@ -5,6 +5,8 @@ import { getDeviceId, getReceiptsFromNeon, saveReceiptToNeon, findHistoricalPric
 import { analyzeReceipts } from './services/geminiService';
 import PriceHistoryModal from './components/PriceHistoryModal';
 import Toast, { ToastType } from './components/Toast';
+import InstallOverlay from './components/InstallOverlay';
+import { usePWAInstall } from './lib/usePWAInstall';
 
 const SplashScreen: React.FC = () => (
   <div className="fixed inset-0 z-[100] bg-slate-50 flex flex-col items-center justify-center p-6 overflow-hidden">
@@ -38,11 +40,25 @@ const App: React.FC = () => {
   const [showCapturePreview, setShowCapturePreview] = useState(false);
   const [scannedData, setScannedData] = useState<Partial<Receipt> | null>(null);
   const [toast, setToast] = useState<{message: string, type: ToastType} | null>(null);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+
+  const { isInstallable, isInstalled, install } = usePWAInstall();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (message: string, type: ToastType = 'info') => {
     setToast({ message, type });
+  };
+
+  const handleInstallClick = async () => {
+    if (isInstallable) {
+      const accepted = await install();
+      if (accepted) {
+        showToast("Aplikasi berhasil dipasang!", "success");
+        return;
+      }
+    }
+    setShowInstallGuide(true);
   };
 
   useEffect(() => {
@@ -283,9 +299,23 @@ const App: React.FC = () => {
       )}
 
       <header className="bg-white px-6 pt-12 pb-6 border-b border-slate-100 sticky top-0 z-30">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tighter italic">BILL CAPTURE</h1>
-          <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Private Cloud Storage</p>
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter italic">BILL CAPTURE</h1>
+            <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Private Cloud Storage</p>
+          </div>
+          {!isInstalled && (
+            <button
+              onClick={handleInstallClick}
+              className="flex items-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 active:scale-95 px-3.5 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border border-blue-200/80 shadow-sm"
+              title="Pasang aplikasi PWA"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Instal App</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -426,8 +456,28 @@ const App: React.FC = () => {
             </svg>
           </button>
           
-          <div className="w-16"></div>
+          {!isInstalled ? (
+            <button 
+              onClick={handleInstallClick} 
+              title="Instal Aplikasi" 
+              className="p-5 bg-white text-blue-600 rounded-full active:scale-90 transition-all shadow-sm border border-slate-100 flex items-center justify-center"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+          ) : (
+            <div className="w-16"></div>
+          )}
         </div>
+      )}
+
+      {showInstallGuide && (
+        <InstallOverlay 
+          onClose={() => setShowInstallGuide(false)} 
+          onDirectInstall={install} 
+          canDirectInstall={isInstallable} 
+        />
       )}
 
       {selectedItemHistory && (

@@ -3,5 +3,6 @@
   "description": "Scan and track supermarket receipts to compare historical prices and manage your shopping records privately.",
   "requestFramePermissions": [
     "camera"
-  ]
+  ],
+  "majorCapabilities": []
 }

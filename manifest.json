@@ -1,21 +1,33 @@
 
 {
-  "id": "bill-capture-pwa-v1",
+  "id": "/",
   "short_name": "BillCapture",
-  "name": "Bill Capture Private Cloud",
+  "name": "Bill Capture - Smart Shopping Tracker",
   "description": "Smart Receipt Tracker & Price History Analyzer",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "maskable any"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/",
@@ -25,5 +37,19 @@
   "theme_color": "#2563eb",
   "background_color": "#f8fafc",
   "categories": ["finance", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Scan Struk",
+      "short_name": "Scan",
+      "description": "Scan struk belanja baru",
+      "url": "/?action=scan",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
   "prefer_related_applications": false
 }

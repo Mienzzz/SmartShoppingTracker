@@ -5,17 +5,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Bill Capture - Smart Shopping Tracker</title>
+  <meta name="description" content="Scan and track supermarket receipts to compare historical prices and manage your shopping records privately." />
+  <meta property="og:title" content="Bill Capture - Smart Shopping Tracker" />
+  <meta property="og:description" content="Scan and track supermarket receipts to compare historical prices and manage your shopping records privately." />
 
-  <!-- PWA Meta Tags -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="BillCapture">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="application-name" content="BillCapture">
-  
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="manifest" href="manifest.json" />
+  <!-- PWA Meta Tags & Icons -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="BillCapture" />
+  <meta name="application-name" content="BillCapture" />
   <meta name="theme-color" content="#2563eb" />
+  
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -103,8 +108,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Menggunakan root sebagai scope agar seluruh aplikasi ter-cover sebagai PWA
-        navigator.serviceWorker.register('./sw.js', { scope: '/' })
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
           .then(reg => {
             console.log('PWA Service Worker Aktif:', reg.scope);
           })
